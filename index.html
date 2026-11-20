@@ -5,105 +5,140 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#171a26">
 <meta name="robots" content="noindex">
-<title>나이아가라 모바일</title>
+<title>모바일 도구</title>
 <style>
-  :root { --bg: #171a26; --surface: #212536; --line: #3a4060; --text: #eceaf2; --muted: #9a9fb8; --accent: #5aa9ff; --danger: #ff8a86; }
+  :root { --bg: #171a26; --surface: #212536; --raised: #2c3148; --line: #3a4060; --text: #eceaf2; --muted: #9a9fb8; --accent: #5aa9ff; --ok: #56c596; --danger: #ff8a86; }
   * { box-sizing: border-box; }
   html { background: #0f111a; }
   body { margin: 0 auto; max-width: 480px; min-height: 100dvh; background: var(--bg); color: var(--text);
     font: 400 15px/1.55 "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; padding: 40px 16px 32px; }
   h1 { font-size: 24px; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.02em; }
+  h2 { font-size: 16px; font-weight: 600; margin: 0; }
   p { margin: 0; color: var(--muted); }
-  form, .box { margin-top: 28px; background: var(--surface); border-radius: 12px; padding: 18px 16px; display: flex; flex-direction: column; gap: 12px; }
+  section { margin-top: 24px; }
+  .apps { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+  .app { background: var(--surface); border-radius: 12px; padding: 14px 14px 12px 16px; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; }
+  .app strong { font-weight: 600; font-size: 16px; }
+  .app small { color: var(--muted); font-size: 13px; grid-column: 1; }
+  .app .state { font-size: 13px; grid-column: 1; color: var(--muted); }
+  .app .state.ok { color: var(--ok); }
+  .app .state.bad { color: var(--danger); }
+  .app .open { grid-column: 2; grid-row: 1 / span 3; }
+  .app .forget { grid-column: 1 / span 2; justify-self: start; }
+  form { margin-top: 12px; background: var(--surface); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
   label { font-size: 14px; color: var(--muted); }
   input { width: 100%; min-height: 46px; padding: 0 12px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 8px; font: inherit; }
-  button { min-height: 46px; border-radius: 12px; border: 0; background: var(--text); color: #171a26; font: inherit; font-weight: 600; cursor: pointer; }
-  button.ghost { background: none; color: var(--accent); min-height: 40px; font-weight: 500; }
-  button[disabled] { opacity: 0.6; }
+  button { min-height: 46px; padding: 0 18px; border-radius: 12px; border: 0; background: var(--text); color: #171a26; font: inherit; font-weight: 600; cursor: pointer; }
+  button.ghost { background: none; color: var(--accent); min-height: 36px; padding: 0; font-weight: 500; font-size: 14px; }
+  button[disabled] { background: var(--raised); color: var(--muted); cursor: default; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .status { min-height: 1.5em; font-size: 14px; }
+  .status { min-height: 1.5em; font-size: 14px; color: var(--muted); }
   .status.err { color: var(--danger); }
-  ol { margin: 0; padding-left: 20px; color: var(--muted); font-size: 14px; }
+  .status.ok { color: var(--ok); }
+  ol, ul { margin: 0; padding-left: 20px; color: var(--muted); font-size: 14px; }
+  li + li { margin-top: 4px; }
   a { color: var(--accent); }
   details { margin-top: 20px; color: var(--muted); font-size: 14px; }
   summary { cursor: pointer; color: var(--text); min-height: 32px; }
+  details p { margin-top: 8px; }
   footer { margin-top: 32px; font-size: 12px; color: var(--muted); }
   [hidden] { display: none !important; }
 </style>
 </head>
 <body>
-<h1>나이아가라 모바일</h1>
-<p>허가된 사용자만 들어갈 수 있습니다. 비공개 저장소를 읽을 수 있는 GitHub 토큰을 입력하세요.</p>
+<h1>모바일 도구</h1>
+<p>허가된 사용자만 열 수 있는 페이지입니다. 각 페이지의 비공개 저장소를 읽을 수 있는 GitHub 토큰이 필요합니다.</p>
 
-<form id="login" hidden>
-  <label for="token">GitHub 토큰</label>
-  <input id="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…" required>
-  <button id="enter" type="submit">들어가기</button>
-  <div id="status" class="status" role="status"></div>
-</form>
-
-<div id="signed" class="box" hidden>
-  <p id="signedText">편집기를 여는 중…</p>
-  <button id="open" type="button">편집기 열기</button>
-  <button id="logout" class="ghost" type="button">이 기기에서 로그아웃</button>
+<div id="unsupported" hidden>
+  <section><p>이 브라우저는 서비스 워커를 지원하지 않아 페이지를 열 수 없습니다. 최신 Chrome이나 Safari를 사용하세요.</p></section>
 </div>
 
-<div id="unsupported" class="box" hidden>
-  <p>이 브라우저는 서비스 워커를 지원하지 않아 편집기를 열 수 없습니다. 최신 Chrome이나 Safari를 사용하세요.</p>
-</div>
+<main id="main" hidden>
+  <section>
+    <h2>페이지</h2>
+    <div id="apps" class="apps"></div>
+    <div id="notice" class="status" role="status"></div>
+  </section>
 
-<details>
-  <summary>토큰 만드는 법</summary>
-  <ol>
-    <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub의 새 fine-grained 토큰 페이지</a>를 엽니다.</li>
-    <li>Repository access에서 <b>Only select repositories</b>를 고르고 <b>niagara-mobile</b>을 선택합니다.</li>
-    <li>Permissions의 Repository permissions에서 <b>Contents</b>를 <b>Read-only</b>로 둡니다. 다른 권한은 주지 않습니다.</li>
-    <li>만든 토큰을 위 칸에 붙여 넣습니다. 토큰은 이 기기의 브라우저에만 저장됩니다.</li>
-  </ol>
-  <p style="margin-top:8px">다른 사람에게 허가하려면 niagara-mobile 저장소에 협업자로 추가하고, 그 사람이 자기 토큰을 만들게 하세요. 허가를 거두려면 협업자에서 빼면 됩니다.</p>
-</details>
+  <section>
+    <h2>토큰 추가</h2>
+    <form id="add">
+      <label for="token">GitHub 토큰. 이 토큰으로 읽을 수 있는 페이지가 열립니다.</label>
+      <input id="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…" required>
+      <button id="addBtn" type="submit">확인</button>
+      <div id="status" class="status" role="status"></div>
+    </form>
+  </section>
+
+  <details>
+    <summary>토큰 만드는 법</summary>
+    <ol>
+      <li>페이지를 가진 GitHub 계정으로 로그인해 <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">새 fine-grained 토큰 페이지</a>를 엽니다.</li>
+      <li>Resource owner를 그 계정으로 두고, Repository access에서 <b>Only select repositories</b>를 골라 아래 저장소를 선택합니다.</li>
+      <li>Repository permissions에서 <b>Contents</b>를 <b>Read-only</b>로 둡니다. 다른 권한은 주지 않습니다.</li>
+      <li>만든 토큰을 위 칸에 넣습니다. 토큰은 이 기기의 브라우저에만 저장됩니다.</li>
+    </ol>
+    <ul id="repoList" style="margin-top:8px"></ul>
+    <p>같은 계정이 가진 저장소는 토큰 하나에 함께 고를 수 있습니다. fine-grained 토큰은 한 계정의 저장소만 고를 수 있어서, 소유 계정이 다른 페이지가 있으면 그 계정의 토큰을 따로 넣어야 합니다.</p>
+    <p>다른 사람에게 허가하려면 그 저장소에 협업자로 추가하세요. 다만 fine-grained 토큰으로는 남의 계정 저장소를 고를 수 없어서, 협업자는 classic 토큰(repo 범위)을 만들어 넣어야 합니다. classic 토큰은 그 사람이 접근할 수 있는 모든 저장소에 쓰기 권한까지 주므로, 협업자에게 그 점을 알려 주세요.</p>
+  </details>
+
+  <section>
+    <button id="logout" class="ghost" type="button">이 기기에서 모두 로그아웃</button>
+  </section>
+</main>
 
 <footer>Epic Games와 관련 없는 개인 도구입니다. Unreal, Unreal Engine, Niagara는 Epic Games, Inc.의 상표 또는 등록 상표입니다.</footer>
 
+<script src="/apps.js"></script>
 <script>
-const OWNER = 'dkweonewmatic', REPO = 'niagara-mobile', APP = '/niagara/';
+const APPS = self.NM_APPS;
 const $ = (id) => document.getElementById(id);
-const status = (text, error) => { $('status').textContent = text; $('status').classList.toggle('err', !!error); };
-const MESSAGES = {
-  login: '',
-  auth: '토큰이 만료됐거나 권한이 없어 편집기를 열 수 없습니다. 토큰을 다시 입력하세요.',
-  rate: 'GitHub 요청 한도에 걸렸습니다. 잠시 뒤 다시 시도하세요.',
-};
+const h = (tag, props = {}, ...kids) => { const el = Object.assign(document.createElement(tag), props); el.append(...kids.filter((k) => k !== null && k !== undefined)); return el; };
+const setStatus = (el, text, kind) => { el.textContent = text; el.className = `status ${kind || ''}`; };
+const state = {};   // app.id → 'ok' | 'none' | 'bad' | 'checking'
 
-async function api(path, token, accept = 'application/vnd.github+json') {
-  return fetch(`https://api.github.com/repos/${OWNER}/${REPO}${path}`, {
+async function api(app, path, token, accept = 'application/vnd.github+json') {
+  return fetch(`https://api.github.com/repos/${app.owner}/${app.repo}${path}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: accept, 'X-GitHub-Api-Version': '2022-11-28' }, cache: 'no-store',
   });
 }
-
-// 토큰이 비공개 저장소를 읽을 수 있는지 확인하고, 최신 커밋을 받아 둔다.
-async function check(token) {
+// 토큰이 그 페이지의 저장소를 읽을 수 있는지 본다. 반환: 'ok' | 'invalid' | 'denied' | 'rate' | 'network'
+async function probe(app, token) {
   let res;
-  try { res = await api('', token); } catch { throw new Error('GitHub에 연결하지 못했습니다. 네트워크를 확인하세요.'); }
-  if (res.status === 401) throw new Error('토큰이 올바르지 않거나 만료됐습니다.');
-  if (res.status === 403 && res.headers.get('x-ratelimit-remaining') === '0') throw new Error(MESSAGES.rate);
-  if (res.status === 403 || res.status === 404) throw new Error('이 토큰으로는 niagara-mobile 저장소를 읽을 수 없습니다. 저장소 선택과 Contents 읽기 권한을 확인하세요.');
-  if (!res.ok) throw new Error(`GitHub 응답 오류 (${res.status})`);
-  const shaRes = await api('/commits/main', token, 'application/vnd.github.sha');
-  return shaRes.ok ? (await shaRes.text()).trim() : '';
+  try { res = await api(app, '', token); } catch { return 'network'; }
+  if (res.ok) return 'ok';
+  if (res.status === 401) return 'invalid';
+  if (res.status === 403 && res.headers.get('x-ratelimit-remaining') === '0') return 'rate';
+  return 'denied';
+}
+async function latestSha(app, token) {
+  try { const res = await api(app, `/commits/${app.branch}`, token, 'application/vnd.github.sha'); return res.ok ? (await res.text()).trim() : ''; } catch { return ''; }
 }
 
-async function save(token, sha) {
-  const cache = await caches.open('nm-auth');
-  await cache.put('/__nm/token', new Response(token));
-  if (sha) await cache.put('/__nm/sha', new Response(sha));
+const authCache = () => caches.open('nm-auth');
+async function getToken(app) { const hit = await (await authCache()).match(`/__nm/${app.id}/token`); return hit ? hit.text() : ''; }
+async function saveToken(app, token, sha) {
+  const cache = await authCache();
+  await cache.put(`/__nm/${app.id}/token`, new Response(token));
+  if (sha) await cache.put(`/__nm/${app.id}/sha`, new Response(sha));
 }
-async function storedToken() {
-  const hit = await (await caches.open('nm-auth')).match('/__nm/token');
-  return hit ? hit.text() : '';
+async function forget(app) {
+  const cache = await authCache();
+  await cache.delete(`/__nm/${app.id}/token`);
+  await cache.delete(`/__nm/${app.id}/sha`);
+  for (const name of await caches.keys()) if (name.startsWith(`nm-files-${app.id}-`)) await caches.delete(name);
 }
-async function logout() {
-  for (const name of await caches.keys()) if (name.startsWith('nm-')) await caches.delete(name);
+// 이전 버전(페이지 하나)에서 저장한 토큰을 나이아가라 페이지 토큰으로 옮긴다.
+async function migrate() {
+  const cache = await authCache();
+  const old = await cache.match('/__nm/token');
+  if (!old) return;
+  const niagara = APPS.find((a) => a.id === 'niagara');
+  if (niagara && !(await getToken(niagara))) await cache.put(`/__nm/${niagara.id}/token`, new Response(await old.text()));
+  await cache.delete('/__nm/token');
+  await cache.delete('/__nm/sha');
+  for (const name of await caches.keys()) if (/^nm-files-[0-9a-f]{40}$/.test(name)) await caches.delete(name);
 }
 
 async function ready() {
@@ -111,54 +146,88 @@ async function ready() {
   await navigator.serviceWorker.ready;
 }
 
-async function main() {
-  if (!('serviceWorker' in navigator) || !('caches' in window)) { $('unsupported').hidden = false; return; }
-  const error = new URLSearchParams(location.search).get('error');
-  if (error === 'auth') await logout();
-  const token = error === 'auth' ? '' : await storedToken();
-  if (!token) {
-    $('login').hidden = false;
-    if (error && MESSAGES[error]) status(MESSAGES[error], true);
-    $('token').focus();
-    return;
-  }
-  $('signed').hidden = false;
-  try {
-    const sha = await check(token);
-    await save(token, sha);
-    await ready();
-    if (!error) location.replace(APP);
-    else $('signedText').textContent = error === 'rate' ? MESSAGES.rate : '로그인되어 있습니다.';
-  } catch (err) {
-    $('signedText').textContent = err.message;
-  }
+function renderApps() {
+  $('apps').replaceChildren(...APPS.map((app) => {
+    const s = state[app.id];
+    const label = { ok: '열 수 있음', none: '토큰 필요', bad: '토큰이 만료됐거나 권한이 없음', checking: '확인하는 중…' }[s] || '';
+    const open = h('button', { className: 'open', type: 'button', disabled: s !== 'ok', textContent: '열기' });
+    open.addEventListener('click', async () => { open.disabled = true; await ready(); location.href = app.prefix; });
+    const forgetBtn = s === 'ok' || s === 'bad' ? h('button', { className: 'ghost forget', type: 'button', textContent: '이 페이지 토큰 지우기' }) : null;
+    if (forgetBtn) forgetBtn.addEventListener('click', async () => { await forget(app); state[app.id] = 'none'; renderApps(); setStatus($('notice'), `${app.title} 토큰을 지웠습니다.`); });
+    return h('div', { className: 'app' },
+      h('strong', { textContent: app.title }), open,
+      h('small', { textContent: app.desc }),
+      h('span', { className: `state ${s === 'ok' ? 'ok' : s === 'bad' ? 'bad' : ''}`, textContent: label }),
+      forgetBtn);
+  }));
+  $('repoList').replaceChildren(...APPS.map((app) => h('li', { textContent: `${app.title}: ${app.owner} 계정의 ${app.repo}` })));
 }
 
-$('login').addEventListener('submit', async (event) => {
+// 저장된 토큰이 아직 유효한지 페이지마다 확인한다.
+async function refreshAll() {
+  for (const app of APPS) state[app.id] = (await getToken(app)) ? 'checking' : 'none';
+  renderApps();
+  await Promise.all(APPS.map(async (app) => {
+    const token = await getToken(app);
+    if (!token) return;
+    const result = await probe(app, token);
+    if (result === 'ok') { state[app.id] = 'ok'; await saveToken(app, token, await latestSha(app, token)); }
+    else if (result === 'invalid' || result === 'denied') state[app.id] = 'bad';
+    else state[app.id] = 'ok'; // 네트워크 문제나 요청 한도면 기존 토큰을 그대로 둔다
+  }));
+  renderApps();
+}
+
+$('add').addEventListener('submit', async (event) => {
   event.preventDefault();
   const token = $('token').value.trim();
   if (!token) return;
-  $('enter').disabled = true;
-  status('확인하는 중…');
-  try {
-    const sha = await check(token);
-    await save(token, sha);
+  $('addBtn').disabled = true;
+  setStatus($('status'), '이 토큰으로 열 수 있는 페이지를 찾는 중…');
+  const results = await Promise.all(APPS.map(async (app) => [app, await probe(app, token)]));
+  const opened = results.filter(([, r]) => r === 'ok').map(([app]) => app);
+  for (const app of opened) { await saveToken(app, token, await latestSha(app, token)); state[app.id] = 'ok'; }
+  $('addBtn').disabled = false;
+  if (opened.length) {
+    $('token').value = '';
     await ready();
-    status('확인했습니다. 편집기를 엽니다.');
-    location.replace(APP);
-  } catch (err) {
-    status(err.message, true);
-    $('enter').disabled = false;
+    renderApps();
+    setStatus($('status'), `${opened.map((a) => a.title).join(', ')}을(를) 열 수 있게 됐습니다.`, 'ok');
+    return;
   }
+  const kinds = new Set(results.map(([, r]) => r));
+  setStatus($('status'),
+    kinds.has('network') ? 'GitHub에 연결하지 못했습니다. 네트워크를 확인하세요.'
+      : kinds.has('rate') ? 'GitHub 요청 한도에 걸렸습니다. 잠시 뒤 다시 시도하세요.'
+        : kinds.has('denied') ? '토큰은 맞지만 목록의 어떤 저장소도 읽을 수 없습니다. 저장소 선택과 Contents 읽기 권한을 확인하세요.'
+          : '토큰이 올바르지 않거나 만료됐습니다.', 'err');
 });
-$('open').addEventListener('click', async () => { await ready(); location.href = APP; });
+
 $('logout').addEventListener('click', async () => {
-  await logout();
-  $('signed').hidden = true;
-  $('login').hidden = false;
-  history.replaceState(null, '', '/');
-  status('로그아웃했습니다. 기기에 저장된 토큰과 편집기 파일을 지웠습니다.');
+  for (const name of await caches.keys()) if (name.startsWith('nm-')) await caches.delete(name);
+  for (const app of APPS) state[app.id] = 'none';
+  renderApps();
+  setStatus($('notice'), '로그아웃했습니다. 이 기기에 저장된 토큰과 페이지 파일을 모두 지웠습니다.');
 });
+
+async function main() {
+  if (!('serviceWorker' in navigator) || !('caches' in window)) { $('unsupported').hidden = false; return; }
+  $('main').hidden = false;
+  await migrate();
+  const params = new URLSearchParams(location.search);
+  const error = params.get('error'), from = APPS.find((a) => a.id === params.get('app'));
+  if (error && from) {
+    if (error === 'auth') await forget(from);
+    setStatus($('notice'), {
+      auth: `${from.title}: 토큰이 만료됐거나 권한이 없어 열 수 없습니다. 토큰을 다시 추가하세요.`,
+      login: `${from.title}을(를) 열려면 토큰이 필요합니다.`,
+      rate: 'GitHub 요청 한도에 걸렸습니다. 잠시 뒤 다시 시도하세요.',
+    }[error] || '', error === 'login' ? '' : 'err');
+    history.replaceState(null, '', '/');
+  }
+  ready().catch((err) => setStatus($('notice'), `서비스 워커를 등록하지 못했습니다: ${err.message}`, 'err'));
+  await refreshAll();
+}
 main();
 </script>
 </body>
